@@ -17,7 +17,7 @@ LISTEN 80
 ### Q : 4. Menurut anda apakah tujuan penggunaan microservices?
 ##### A : Untuk memudahkan maintenance and upgrade
 #
-### Q : Bagaimana cara index bekerja pada sebuah database?
+### Q : 5. Bagaimana cara index bekerja pada sebuah database?
 ##### A : Index bekerja dengan cara menyusun data dengan terurut dengan cara membuat struktur data yang berisi kumpulan keys beserta referensinya ke actual data di table sehingga untuk mempercepat pencarian data
 
 
