@@ -18,6 +18,6 @@ LISTEN 80
 ##### A : Untuk memudahkan maintenance and upgrade
 #
 ### Q : 5. Bagaimana cara index bekerja pada sebuah database?
-##### A : Index bekerja dengan cara menyusun data dengan terurut dengan cara membuat struktur data yang berisi kumpulan keys beserta referensinya ke actual data di table sehingga untuk mempercepat pencarian data
+##### A : Index bekerja dengan cara menyusun data dengan terurut dengan cara membuat struktur data yang berisi kumpulan keys beserta referensinya ke actual data di table sehingga dapat mempercepat pencarian data
 
 
