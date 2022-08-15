@@ -8,11 +8,7 @@ import (
 func main() {
 	var text string
 	var text2 string
-	var totalText int
-	var totalText2 int
-	var differentiation int
-	var s []rune
-	var s2 []rune
+	var mResult bool
 
 	log.Println("Please type first input")
 	fmt.Scanln(&text)
@@ -20,15 +16,27 @@ func main() {
 	log.Println("Please type second input")
 	fmt.Scanln(&text2)
 
-	totalText = len(text)
-	totalText2 = len(text2)
+	mResult = isChangeOnce(text, text2)
+	log.Println(mResult)
+
+}
+
+func isChangeOnce(input, input2 string) bool {
+	var totalText int
+	var totalText2 int
+	var differentiation int
+	var s []rune
+	var s2 []rune
+
+	totalText = len(input)
+	totalText2 = len(input2)
 	differentiation = totalText - totalText2
 
-	if (differentiation < -1) && (differentiation > 1) {
-		log.Println("FALSE")
+	if (differentiation < -1) || (differentiation > 1) {
+		return false
 	} else {
-		s = []rune(text)
-		s2 = []rune(text2)
+		s = []rune(input)
+		s2 = []rune(input2)
 
 		if totalText < totalText2 {
 
@@ -45,9 +53,9 @@ func main() {
 			}
 
 			if len(s2) > 1 {
-				log.Println("FALSE")
+				return false
 			} else {
-				log.Println("TRUE")
+				return true
 			}
 
 		} else {
@@ -63,14 +71,13 @@ func main() {
 			}
 
 			if len(s) > 1 {
-				log.Println("FALSE")
+				return false
 			} else {
-				log.Println("TRUE")
+				return true
 			}
 		}
 
 	}
-
 }
 
 func delChar(s []rune, index int) []rune {

@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -29,26 +28,9 @@ const port string = "8080"
 // Object Block
 // Database Model
 type ModelProduct struct {
+	Message    string `bson:"message,omitempty" json:"message,omitempty"`
 	KodeProduk string `bson:"kodeProduk,omitempty" json:"kodeProduk,omitempty"`
 	Kuantitas  int    `bson:"kuantitas,omitempty" json:"kuantitas,omitempty"`
-}
-
-// Request Model
-type ModelRequest struct {
-	KodeProduk string `json:"kodeProduk,omitempty"`
-	Kuantitas  int    `json:"kuantitas,omitempty"`
-}
-
-// Response Model
-type ModelResponse struct {
-	ResponseMessage string `json:"responseMessage"`
-}
-
-type ModelResponse2 struct {
-	ResponseMessage string `json:"responseMessage"`
-
-	KodeProduk string `json:"kodeProduk,omitempty"`
-	Kuantitas  int    `json:"kuantitas,omitempty"`
 }
 
 func main() {
@@ -80,12 +62,12 @@ func initDatabase() {
 		panic(err2)
 	}
 
-	fmt.Printf("Successfully connected and pinged.\n")
+	log.Println("Successfully connected and pinged")
 
 }
 
 func initServer() {
-	log.Printf("Server listener started.\n\n")
+	log.Println("Server listener started")
 
 	http.HandleFunc("/product/set", setProduct)
 	http.HandleFunc("/product/read", readProduct)
@@ -99,29 +81,15 @@ func setProduct(w http.ResponseWriter, r *http.Request) {
 	var coll *mongo.Collection
 	var filter primitive.D
 	var opts *options.UpdateOptions
-	var res *mongo.UpdateResult
 	var update primitive.D
-	var upsertedId interface{}
 	var responseJson []byte
-	var modelResponse ModelResponse
 	var modelProduct ModelProduct
 
 	// Parse body
-	var modelRequest ModelRequest
-	err = json.NewDecoder(r.Body).Decode(&modelRequest)
+	err = json.NewDecoder(r.Body).Decode(&modelProduct)
 	if err != nil {
-		panic(err)
-	}
-
-	fmt.Printf("Kode Product : %v\n", modelRequest.KodeProduk)
-	fmt.Printf("Kuantitas : %v\n", modelRequest.Kuantitas)
-
-	fmt.Printf("Request insert document\n")
-
-	// Create structure
-	modelProduct = ModelProduct{
-		KodeProduk: modelRequest.KodeProduk,
-		Kuantitas:  modelRequest.Kuantitas,
+		errorHandler(w, "Body request is wrong", err)
+		return
 	}
 
 	// Insert to database
@@ -129,31 +97,19 @@ func setProduct(w http.ResponseWriter, r *http.Request) {
 	filter = bson.D{primitive.E{Key: "kodeProduk", Value: modelProduct.KodeProduk}}
 	opts = options.Update().SetUpsert(true)
 	update = bson.D{{Key: "$set", Value: modelProduct}}
-	res, err = coll.UpdateOne(context.TODO(), filter, update, opts)
+	_, err = coll.UpdateOne(context.TODO(), filter, update, opts)
 	if err != nil {
-		log.Println(err)
+		errorHandler(w, "coll.UpdateOne error", err)
 		return
 	}
-	upsertedId = res.UpsertedID
 
-	fmt.Printf("Document UpsertedID with id : %v\n\n", upsertedId)
-
-	if upsertedId != nil {
-		// Create response
-		modelResponse = ModelResponse{
-			ResponseMessage: "Product data inserted to database",
-		}
-	} else {
-		// Create response
-		modelResponse = ModelResponse{
-			ResponseMessage: "Product data updated to database",
-		}
-
+	modelProduct = ModelProduct{
+		Message: "Product data has set to database",
 	}
 
-	responseJson, err = json.Marshal(modelResponse)
+	responseJson, err = json.Marshal(modelProduct)
 	if err != nil {
-		log.Println(err)
+		errorHandler(w, "Response parse to json failed", err)
 		return
 	}
 
@@ -167,62 +123,43 @@ func readProduct(w http.ResponseWriter, r *http.Request) {
 	var err error
 	var myCollection *mongo.Collection
 	var responseJson []byte
-	var modelResponse ModelResponse
-	var modelResponse2 ModelResponse2
+	var modelResponse ModelProduct
 	var filter primitive.D
 
 	// Parse body
 	queryParameter = r.URL.Query()
 	productId = queryParameter["kodeProduk"][0]
 
-	fmt.Printf("Request read document by productId : %v\n", productId)
-
 	// begin find
 	myCollection = client.Database(databaseName).Collection(collectionName)
 
 	filter = bson.D{{Key: "kodeProduk", Value: productId}}
 
-	var modelProduct ModelProduct
+	var modelDatabaseProduct ModelProduct
 	err = myCollection.FindOne(
 		context.TODO(),
 		filter,
-	).Decode(&modelProduct)
+	).Decode(&modelDatabaseProduct)
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			modelResponse = ModelResponse{
-				ResponseMessage: "Data not available",
-			}
-
-			responseJson, err = json.Marshal(modelResponse)
-			if err != nil {
-				log.Println(err)
-				return
-			}
-
-			w.Header().Set("content-type", "application/json")
-			w.Write(responseJson)
-
-			log.Println(err)
-
+			errorHandler(w, "Data not available", err)
 			return
 		}
-		log.Println(err)
+		errorHandler(w, "Decode error", err)
 		return
 	}
 	// end find
 
-	fmt.Printf("Document finded\n\n")
-
 	// Create response
-	modelResponse2 = ModelResponse2{
-		ResponseMessage: "Product data available in database",
-		KodeProduk:      modelProduct.KodeProduk,
-		Kuantitas:       modelProduct.Kuantitas,
+	modelResponse = ModelProduct{
+		Message:    "Product data available in database",
+		KodeProduk: modelDatabaseProduct.KodeProduk,
+		Kuantitas:  modelDatabaseProduct.Kuantitas,
 	}
 
-	responseJson, err = json.Marshal(modelResponse2)
+	responseJson, err = json.Marshal(modelResponse)
 	if err != nil {
-		log.Println(err)
+		errorHandler(w, "Parsing JSON error", err)
 		return
 	}
 
@@ -232,58 +169,68 @@ func readProduct(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteProduct(w http.ResponseWriter, r *http.Request) {
-	var queryParameter url.Values
-	var productId string
 	var coll *mongo.Collection
 	var err error
 	var filter primitive.D
 	var result *mongo.DeleteResult
-	var modelResponse ModelResponse
+	var modelProduct ModelProduct
 	var responseJson []byte
 
 	// Parse body
-	queryParameter = r.URL.Query()
-	productId = queryParameter["kodeProduk"][0]
-
-	fmt.Printf("Request delete document by productId : %v\n", productId)
+	err = json.NewDecoder(r.Body).Decode(&modelProduct)
+	if err != nil {
+		errorHandler(w, "Body request is wrong", err)
+		return
+	}
 
 	coll = client.Database(databaseName).Collection(collectionName)
-	filter = bson.D{{Key: "kodeProduk", Value: productId}}
+	filter = bson.D{{Key: "kodeProduk", Value: modelProduct.KodeProduk}}
 	result, err = coll.DeleteOne(context.TODO(), filter)
 	if err != nil {
-		log.Println(err)
+		errorHandler(w, "Database error", err)
 		return
 	}
 
 	if result.DeletedCount == 0 {
-		modelResponse = ModelResponse{
-			ResponseMessage: "Data not available",
-		}
 
-		responseJson, err = json.Marshal(modelResponse)
-		if err != nil {
-			log.Println(err)
-			return
-		}
-
-		w.Header().Set("content-type", "application/json")
-		w.Write(responseJson)
-		log.Println("Can't find your data")
+		errorHandler(w, "Data not available", err)
 		return
 	}
 
-	fmt.Printf("Document deleted\n\n")
-
 	// Create response
-	modelResponse = ModelResponse{
-		ResponseMessage: "Product data deleted from database",
+	modelProduct = ModelProduct{
+		Message: "Product data deleted from database",
 	}
-	responseJson, err = json.Marshal(modelResponse)
+	responseJson, err = json.Marshal(modelProduct)
 	if err != nil {
-		log.Println(err)
+		errorHandler(w, "Parsing JSON error", err)
 		return
 	}
 
 	w.Header().Set("content-type", "application/json")
 	w.Write(responseJson)
+}
+
+func errorHandler(w http.ResponseWriter, message string, err error) {
+	var responseJson []byte
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	w.Header().Set("content-type", "application/json")
+	w.WriteHeader(http.StatusInternalServerError)
+
+	modelProduct := ModelProduct{
+		Message: message,
+	}
+
+	responseJson, err = json.Marshal(modelProduct)
+	if err != nil {
+		w.Write([]byte("Parsing error"))
+		return
+	}
+
+	w.Write(responseJson)
+
 }
