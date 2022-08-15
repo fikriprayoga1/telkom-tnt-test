@@ -13,22 +13,30 @@ type ModelMoney struct {
 }
 
 func main() {
-	var modelMoney []ModelMoney
-	var err error
+	var finalValue string
 	var text string
-	var value int
-	var mTotal int
-	var finalValue []byte
 
 	log.Println("Please type input")
 	fmt.Scanln(&text)
 
-	value, err = strconv.Atoi(text)
+	finalValue = moneyReturn(text)
+
+	log.Println(string(finalValue))
+
+}
+
+func moneyReturn(moneyInput string) string {
+	var modelMoney []ModelMoney
+	var err error
+	var value int
+	var mTotal int
+	var finalValue []byte
+
+	value, err = strconv.Atoi(moneyInput)
 
 	if err != nil {
 		log.Print(err)
-		log.Println("Please type number only")
-		return
+		return "Please type number only"
 	}
 
 	if value >= 100000 {
@@ -99,10 +107,9 @@ func main() {
 
 	finalValue, err = json.MarshalIndent(modelMoney, "", "  ")
 	if err != nil {
-		log.Println("Converting object to json failed")
-		return
+
+		return "Converting object to json failed"
 	}
 
-	log.Println(string(finalValue))
-
+	return string(finalValue)
 }
