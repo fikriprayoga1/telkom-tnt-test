@@ -1,23 +1,28 @@
-# Telkom TNT Test
+# Documentation
 
-### Q : 3. Apakah ada kesalahan dari script di bawah ini? Jika ada tolong jelaskan dimana letak kesalahannya dan bagaimana anda memperbaikinya. Jika tidak ada, tolong jelaskan untuk apa script di bawah ini.
-```
-FROM golang
-ADD . /go/src/github.com/telkomdev/indihome/backend
-WORKDIR /go/src/github.com/telkomdev/indihome
-RUN go get github.com/tools/godep
-RUN godep restore
-RUN go install github.com/telkomdev/indihome
-ENTRYPOINT /go/bin/indihome
-LISTEN 80
-```
-#
-##### A : LISTEN diganti menjadi EXPOSE
-#
-### Q : 4. Menurut anda apakah tujuan penggunaan microservices?
-##### A : Untuk memudahkan maintenance and upgrade
-#
-### Q : 5. Bagaimana cara index bekerja pada sebuah database?
-##### A : Index bekerja dengan cara menyusun data dengan terurut dengan cara membuat struktur data yang berisi kumpulan keys beserta referensinya ke actual data di table sehingga dapat mempercepat pencarian data
+## Task Section
+### Task 3
+LISTEN diganti menjadi EXPOSE
 
+### Task 4
+Untuk memudahkan maintenance and upgrade
 
+### Task 5
+Index bekerja dengan cara menyusun data dengan terurut dengan cara membuat struktur data yang berisi kumpulan keys beserta referensinya ke actual data di table sehingga dapat mempercepat pencarian data
+
+## Guide Section
+
+### Rest API
+Click [Postman Documentation](https://documenter.getpostman.com/view/4459576/VUxXJNt9#intro) to go to Rest API guide
+
+### Run Unit Test
+##### Step :
+- Move to directory 1, 2 or 6/src
+- type ``` go test -v ``` and then press enter
+
+### Prepare & Run Docker
+##### Step :
+- Move to directory 1
+- type ``` docker build -t fikriprayoga1/telkom-server:1.0 . ``` and then press enter
+- If you don't have mongo image, type ``` docker pull mongo ``` and then press enter
+- type ``` docker compose up -d ``` and then press enter 
