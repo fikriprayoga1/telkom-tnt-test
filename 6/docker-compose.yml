@@ -1,0 +1,33 @@
+version: "3.8"
+
+volumes:
+    mongo:
+        name: mongo
+
+services:
+    mongo:
+        container_name: mongo
+        image: mongo
+        ports:
+            - 27017:27017
+        networks:
+            - telkom
+        volumes:
+            - type: volume
+              source: mongo
+              target: /data/db
+    telkom-server:
+        container_name: telkom-server
+        image: fikriprayoga1/telkom-server:1.0
+        ports:
+            - 8080:8080
+        networks:
+            - telkom
+        depends_on:
+            - mongo
+        environment:
+            - MONGO_HOST=mongo        
+
+networks:
+    telkom:
+        name: telkom
